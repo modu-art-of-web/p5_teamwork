@@ -66,11 +66,12 @@ getComponent().then(component => {
 		var allParticles = [];
 		p.setup = function() {
 			console.log('setup');
-			p.createCanvas(700, 410);
-			p.setFrameRate(60);
+			// p.createCanvas(700, 410);
+			p.createCanvas(p.windowWidth, p.windowHeight);
+			// p.setFrameRate(60);
 			// p.modules = modules;
 			p.allParticles = allParticles;
-			ps = new ParticleSystem(p.createVector(p.width/2, 50), p);
+			ps = new ParticleSystem(p);
 		};
 
 		p.draw = function() {
@@ -103,7 +104,7 @@ getComponent().then(component => {
 			// var gravity = p.createVector(0, 0.1);
 			// var wind = p.createVector(p.random(-1, 1), 0);
 			// // ps.applyForce(wind);
-
+			
 			p.background(51);
 			ps.addParticle();
 			ps.run();

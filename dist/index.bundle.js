@@ -249,11 +249,12 @@ getComponent().then(component => {
 		var allParticles = [];
 		p.setup = function() {
 			console.log('setup');
-			p.createCanvas(700, 410);
-			p.setFrameRate(60);
+			// p.createCanvas(700, 410);
+			p.createCanvas(p.windowWidth, p.windowHeight);
+			// p.setFrameRate(60);
 			// p.modules = modules;
 			p.allParticles = allParticles;
-			ps = new __WEBPACK_IMPORTED_MODULE_1__particle_system_js__["a" /* default */](p.createVector(p.width/2, 50), p);
+			ps = new __WEBPACK_IMPORTED_MODULE_1__particle_system_js__["a" /* default */](p);
 		};
 
 		p.draw = function() {
@@ -286,7 +287,7 @@ getComponent().then(component => {
 			// var gravity = p.createVector(0, 0.1);
 			// var wind = p.createVector(p.random(-1, 1), 0);
 			// // ps.applyForce(wind);
-
+			
 			p.background(51);
 			ps.addParticle();
 			ps.run();
@@ -35461,21 +35462,40 @@ module.exports = {
 // import p5 from 'p5';
 // var p5tw = new p5();
 
+function requireAll(requireContext) {
+  console.log('requireContext : ' + requireContext);
+  return requireContext.keys().map(requireContext);
+}
+var modules = requireAll(__webpack_require__(5));
 
-var ParticleSystem = function(position, p5tw) {
+var ParticleSystem = function(p5tw) {
   // p5tw.draw = function(){
   //   console.log('aaaaaaaaa');
   // }
-  this.origin = position.copy();
+  // this.origin = position.copy();
   this.particles = [];
+
+
+  var members = [];
+  modules.forEach(function(m, i){
+    var minX = p5tw.width/modules.length * (i);
+    var maxX = p5tw.width/modules.length * (i+1);
+    var size = {x:minX,y:0,w:p5tw.width/modules.length,h:p5tw.height};
+                  
+    members.push(new m.member(p5tw,size));
+  });
 
   this.addParticle = function() {
     // this.particles.push(new Particle(this.origin, p5tw));
     var randOrigin = p5tw.createVector(p5tw.random(0, p5tw.width), p5tw.random(0, p5tw.height));
-    this.particles.push(new __WEBPACK_IMPORTED_MODULE_0__particle_js__["a" /* default */](randOrigin, p5tw));
+    this.particles.push(new __WEBPACK_IMPORTED_MODULE_0__particle_js__["a" /* default */](randOrigin, p5tw, members));
   };
 
   this.run = function() {
+    for (var i = members.length-1; i >= 0; i--) {
+      p5tw.fill(members[i].bg[0],members[i].bg[1],members[i].bg[2], members[i].bg[3]);
+      p5tw.rect(members[i].size.x, members[i].size.y, members[i].size.w, members[i].size.h);
+    }
     for (var i = this.particles.length-1; i >= 0; i--) {
       var p = this.particles[i];
       // if(p.ownerId)
@@ -35503,6 +35523,42 @@ var ParticleSystem = function(position, p5tw) {
   };
 };
 
+function fisheye() {
+    var min = 0,
+            max = 1,
+            distortion = 3,
+            focus = 0;
+
+    function G(x) {
+        return (distortion + 1) * x / (distortion * x + 1);
+    }
+
+    function fisheye(x) {
+        var Dmax_x = (x < focus ? min : max) - focus,
+                Dnorm_x = x - focus;
+        return G(Dnorm_x / Dmax_x) * Dmax_x + focus;
+    }
+
+    fisheye.extent = function(_) {
+        if (!arguments.length) return [min, max];
+        min = +_[0], max = +_[1];
+        return fisheye;
+    };
+
+    fisheye.distortion = function(_) {
+        if (!arguments.length) return distortion;
+        distortion = +_;
+        return fisheye;
+    };
+
+    fisheye.focus = function(_) {
+        if (!arguments.length) return focus;
+        focus = +_;
+        return fisheye;
+    };
+
+    return fisheye;
+}
 /* harmony default export */ __webpack_exports__["a"] = (ParticleSystem);
 
 // import Particle from './particle';
@@ -35550,20 +35606,23 @@ var ParticleSystem = function(position, p5tw) {
 // var p5tw = new p5();
 
 
-function requireAll(requireContext) {
-  console.log('requireContext : ' + requireContext);
-  return requireContext.keys().map(requireContext);
-}
-var modules = requireAll(__webpack_require__(5));
+// function requireAll(requireContext) {
+//   console.log('requireContext : ' + requireContext);
+//   return requireContext.keys().map(requireContext);
+// }
+// var modules = requireAll(require.context("./members", true, /^\.\/.*\.js$/));
 // var moduleLength = modules.length;
 
 // import * as modules from './members/'
-var Particle = function(position, p5tw) {
+var Particle = function(position, p5tw, members) {
   this.acceleration = p5tw.createVector(0, 0);
-  this.velocity = p5tw.createVector(p5tw.random(-1, 1), p5tw.random(-1, 0));
+  // this.velocity = p5tw.createVector(p5tw.random(-1, 1), p5tw.random(-1, 0));
+  this.velocity = p5tw.createVector(0, 0);
   this.position = position.copy();
   this.lifespan = 255.0;
   this.ownerId = 0;
+
+  
 
   this.run = function() {
     this.update();
@@ -35578,15 +35637,17 @@ var Particle = function(position, p5tw) {
   // Method to update position
   this.update = function(){
     var that = this;
-    var f = modules[this.ownerId].update(p5tw);
+
+    var f = members[this.ownerId].update(p5tw);
     this.acceleration.add(f)
     that.velocity.add(that.acceleration);
     that.position.add(that.velocity);
     that.lifespan -= 2;
 
-    modules.forEach(function(m, i){
-      var minX = p5tw.width/modules.length * (i);
-      var maxX = p5tw.width/modules.length * (i+1);
+    members.forEach(function(m, i){
+
+      var minX = p5tw.width/members.length * (i);
+      var maxX = p5tw.width/members.length * (i+1);
       if(minX < that.position.x  && maxX > that.position.x){
           that.ownerId = i;
           that.acceleration = p5tw.createVector(0, 0);
@@ -35608,8 +35669,16 @@ var Particle = function(position, p5tw) {
     // }else if(this.ownerId === 2){
     //   p5tw.fill(0,0,255, this.lifespan);
     // }
-    modules[this.ownerId].draw(p5tw);
-    p5tw.ellipse(this.position.x, this.position.y, 12, 12);
+    
+    // p5tw.fill(10,52,180, 10);
+    // p5tw.rect(members[this.ownerId].size.x, members[this.ownerId].size.y, members[this.ownerId].size.w, members[this.ownerId].size.h);
+    
+    // for (var i = members.length-1; i >= 0; i--) {
+    //   p5tw.fill(members[i].bg[0],members[i].bg[1],members[i].bg[2], members[i].bg[3]);
+    //   p5tw.rect(members[i].size.x, members[i].size.y, members[i].size.w, members[i].size.h);
+    // }
+    members[this.ownerId].draw(this.position);
+    // p5tw.ellipse(this.position.x, this.position.y, 12, 12);
   };
 
   // Is the particle still useful?
@@ -35680,6 +35749,7 @@ var Particle = function(position, p5tw) {
 var map = {
 	"./member1.js": 6,
 	"./member2.js": 7,
+	"./member3.js": 12,
 	"./taejaehan.js": 8
 };
 function webpackContext(req) {
@@ -35700,163 +35770,377 @@ webpackContext.id = 5;
 
 /***/ }),
 /* 6 */
-/***/ (function(module, exports) {
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
 
-// import {p5tw} from '../p5tw.js';
+"use strict";
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* harmony export (immutable) */ __webpack_exports__["member"] = member;
+// // import {p5tw} from '../p5tw.js';
 
-function setup(){
+// function setup(){
 
-}
-function update(p){
+// }
+// function update(p){
 
+//     var gravity = p.createVector(0, 0.1);
+//     var wind = p.createVector(p.random(-1, 1), 0);
+
+//     return gravity.add(wind);
+
+// 	// var mouse = p5tw.createVector(p5tw.mouseX,p5tw.mouseY);
+//  //    mover.acceleration = p5.Vector.sub(mouse,mover.position);
+
+//     // Set magnitude of acceleration
+//     // mover.acceleration.setMag(p5tw.random(0, 0.9));
+//     // mover.velocity.add(mover.acceleration);
+//     // mover.velocity.limit(3);
+//     // mover.position.add(mover.velocity);
+    
+
+// }
+// function draw(p){
+
+//   p.stroke(255,0,0, 0.1, 0.1);
+//   p.strokeWeight(2);
+//   p.fill(255,0,0, 30);
+//   // rect(30, 20, 55, 55);
+//   // p.strokeWeight(2);
+//   // p.fill(127, 0.1);
+//   // p.ellipse(10, 20, 12, 12);
+
+//   // p5tw.background(0);
+//   // p5tw.fill('green');
+//   // p5tw.ellipse(p5tw.position.x,p5tw.position.y,5,5);
+  
+
+//   // p.background(51);
+//   // // Apply gravity force to all Particles
+//   // var gravity = p.createVector(0, 0.1);
+//   // var wind = p.createVector(p.random(-1, 1), 0);
+//   // ps.applyForce(wind);
+
+//   // ps.addParticle();
+//   // ps.run();
+// }
+// module.exports  = {
+// 	setup : setup,
+// 	update : update, 
+// 	draw : draw
+// };
+
+function member(p, size) {
+  this.size = size;
+  this.particles = [];
+  this.bg = [0,52,180, 255];
+
+  this.update = function(){
     var gravity = p.createVector(0, 0.1);
     var wind = p.createVector(p.random(-1, 1), 0);
 
-    return gravity.add(wind);
+    // return gravity.add(wind);
+  }
 
-	// var mouse = p5tw.createVector(p5tw.mouseX,p5tw.mouseY);
- //    mover.acceleration = p5.Vector.sub(mouse,mover.position);
-
-    // Set magnitude of acceleration
-    // mover.acceleration.setMag(p5tw.random(0, 0.9));
-    // mover.velocity.add(mover.acceleration);
-    // mover.velocity.limit(3);
-    // mover.position.add(mover.velocity);
-    
-
+  this.draw = function(pos) {
+    // p.fill(10,52,180, 10);
+    // p.rect(size.x, size.y, size.w, size.h);
+    p.stroke(255,0,0, 0.1, 0.1);
+    p.strokeWeight(2);
+    p.fill(255,0,0,);
+    p.ellipse(pos.x, pos.y, 3, 3);
+  };
 }
-function draw(p){
 
-  p.stroke(255,0,0, 0.1, 0.1);
-  p.strokeWeight(2);
-  p.fill(255,0,0, 30);
-  // p.strokeWeight(2);
-  // p.fill(127, 0.1);
-  // p.ellipse(10, 20, 12, 12);
-
-  // p5tw.background(0);
-  // p5tw.fill('green');
-  // p5tw.ellipse(p5tw.position.x,p5tw.position.y,5,5);
-  
-
-  // p.background(51);
-  // // Apply gravity force to all Particles
-  // var gravity = p.createVector(0, 0.1);
-  // var wind = p.createVector(p.random(-1, 1), 0);
-  // ps.applyForce(wind);
-
-  // ps.addParticle();
-  // ps.run();
-}
-module.exports  = {
-	setup : setup,
-	update : update, 
-	draw : draw
-};
 
 /***/ }),
 /* 7 */
-/***/ (function(module, exports) {
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
 
-// import {p5tw} from '../p5tw.js';
-function setup(){
+"use strict";
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* harmony export (immutable) */ __webpack_exports__["member"] = member;
+/* harmony export (immutable) */ __webpack_exports__["a"] = a;
+// // import {p5tw} from '../p5tw.js';
+// function setup(){
 
-}
-function update(p){
+// }
+// function update(p){
 
-    var gravity = p.createVector(0, 1);
+//     var gravity = p.createVector(0, 1);
 
-    return gravity;
+//     return gravity;
 
-  // var mouse = p5tw.createVector(p5tw.mouseX,p5tw.mouseY);
- //    mover.acceleration = p5.Vector.sub(mouse,mover.position);
+//   // var mouse = p5tw.createVector(p5tw.mouseX,p5tw.mouseY);
+//  //    mover.acceleration = p5.Vector.sub(mouse,mover.position);
 
-    // Set magnitude of acceleration
-    // mover.acceleration.setMag(p5tw.random(0, 0.9));
-    // mover.velocity.add(mover.acceleration);
-    // mover.velocity.limit(3);
-    // mover.position.add(mover.velocity);
+//     // Set magnitude of acceleration
+//     // mover.acceleration.setMag(p5tw.random(0, 0.9));
+//     // mover.velocity.add(mover.acceleration);
+//     // mover.velocity.limit(3);
+//     // mover.position.add(mover.velocity);
     
 
-}
-function draw(p){
+// }
+// function draw(p){
 
 
-  p.stroke(0,255,0, 0.1, 0.1);
-  p.strokeWeight(2);
-  p.fill(0,255,0,30);
-  // p.background(0);
-  // p5tw.fill('green');
-  // p5tw.ellipse(p5tw.position.x,p5tw.position.y,5,5);
+//   p.stroke(0,255,0, 0.1, 0.1);
+//   p.strokeWeight(2);
+//   p.fill(0,255,0,30);
+//   // p.background(0);
+//   // p5tw.fill('green');
+//   // p5tw.ellipse(p5tw.position.x,p5tw.position.y,5,5);
   
 
-  // p.background(51);
-  // // Apply gravity force to all Particles
-  // var gravity = p.createVector(0, 0.1);
-  // var wind = p.createVector(p.random(-1, 1), 0);
-  // ps.applyForce(wind);
+//   // p.background(51);
+//   // // Apply gravity force to all Particles
+//   // var gravity = p.createVector(0, 0.1);
+//   // var wind = p.createVector(p.random(-1, 1), 0);
+//   // ps.applyForce(wind);
 
-  // ps.addParticle();
-  // ps.run();
+//   // ps.addParticle();
+//   // ps.run();
+
+// }
+
+// module.exports = {
+// 	setup : setup,
+// 	update : update, 
+// 	draw : draw
+// };
+// 
+function member (p, size) {
+  this.size = size;
+  this.particles = [];
+  this.bg = [0,222,180, 255];
+
+  this.update = function(){
+    var gravity = p.createVector(0, 0.1);
+
+    return gravity;
+  }
+  this.draw = function(pos) {
+    p.stroke(0,255,0, 0.1, 255);
+    p.strokeWeight(2);
+    p.fill(0,255,0);
+    p.rect(pos.x, pos.y, 10, 10);
+  };
+};
+
+function a(){
 
 }
-
-module.exports = {
-	setup : setup,
-	update : update, 
-	draw : draw
-};
+// module.exports = [member1, a];
 
 /***/ }),
 /* 8 */
-/***/ (function(module, exports) {
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
 
-// import {p5tw} from '../p5tw.js';
-function setup(){
+"use strict";
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* harmony export (immutable) */ __webpack_exports__["member"] = member;
+// // import {p5tw} from '../p5tw.js';
+// function setup(){
 
-}
-function update(p){
+// }
+// function update(p){
 
-    var friction = p.createVector(-0.1, -0.1);
-    return friction;
+//     var friction = p.createVector(-0.1, -0.1);
+//     return friction;
 
-  // var mouse = p5tw.createVector(p5tw.mouseX,p5tw.mouseY);
- //    mover.acceleration = p5.Vector.sub(mouse,mover.position);
+//   // var mouse = p5tw.createVector(p5tw.mouseX,p5tw.mouseY);
+//  //    mover.acceleration = p5.Vector.sub(mouse,mover.position);
 
-    // Set magnitude of acceleration
-    // mover.acceleration.setMag(p5tw.random(0, 0.9));
-    // mover.velocity.add(mover.acceleration);
-    // mover.velocity.limit(3);
-    // mover.position.add(mover.velocity);
+//     // Set magnitude of acceleration
+//     // mover.acceleration.setMag(p5tw.random(0, 0.9));
+//     // mover.velocity.add(mover.acceleration);
+//     // mover.velocity.limit(3);
+//     // mover.position.add(mover.velocity);
     
 
-}
-function draw(p){
+// }
+// function draw(p){
 
 
-  p.stroke(0,0,255, 0.1, 0.1);
-  p.strokeWeight(2);
-  p.fill(0,0,255,30);
-  // p5tw.background(0);
-  // p5tw.fill('green');
-  // p5tw.ellipse(p5tw.position.x,p5tw.position.y,5,5);
+//   p.stroke(0,0,255, 0.1, 0.1);
+//   p.strokeWeight(2);
+//   p.fill(0,0,255,30);
+//   // p5tw.background(0);
+//   // p5tw.fill('green');
+//   // p5tw.ellipse(p5tw.position.x,p5tw.position.y,5,5);
   
 
-  // p.background(51);
-  // // Apply gravity force to all Particles
-  // var gravity = p.createVector(0, 0.1);
-  // var wind = p.createVector(p.random(-1, 1), 0);
-  // ps.applyForce(wind);
+//   // p.background(51);
+//   // // Apply gravity force to all Particles
+//   // var gravity = p.createVector(0, 0.1);
+//   // var wind = p.createVector(p.random(-1, 1), 0);
+//   // ps.applyForce(wind);
 
-  // ps.addParticle();
-  // ps.run();
+//   // ps.addParticle();
+//   // ps.run();
 
-}
+// }
 
-module.exports  = {
-	setup : setup,
-	update : update, 
-	draw : draw
+// module.exports  = {
+// 	setup : setup,
+// 	update : update, 
+// 	draw : draw
+// };
+
+function member(p, size) {
+  this.size = size;
+  this.particles = [];
+  this.bg = [111,30,7, 255];
+
+  this.angle = 0;
+  this.aVelocity = 0;
+  this.aAcceleration = 0.0001;
+
+  this.update = function(){
+    this.angle += this.aVelocity;
+    this.aVelocity += this.aAcceleration;
+    // this.aVelocity += p.random(-0.001, 0.001);
+    var random = p.createVector(p.random(-0.1, 0.1), p.random(-0.1, 0.1));
+    return random;
+  }
+  this.draw = function(pos) {
+    p.stroke(0,0,255, 255);
+    p.strokeWeight(2);
+    p.fill(0,0,255);
+
+
+    // p.line(-60, 0, 60, 0);
+    // p.ellipse(60, 0, 16, 16);
+    // p.ellipse(-60, 0, 16, 16);
+    // p.translate(pos.x, pos.y);
+    // 
+    // p.rotate(this.angle);
+    // p.rectMode(p.CENTER);
+    // p.push();
+    // p.line(pos.x-30, pos.y, pos.x+30, pos.y);
+    // p.ellipse(pos.x+30, pos.y, 5, 5);
+    // p.ellipse(pos.x-30, pos.y, 5, 5);
+    // p.pop();
+    // this.angle += this.aVelocity;
+    // this.aVelocity = this.aAcceleration;
+    // 
+    // p.stroke(0);
+    // p.fill(175, 200);
+    // p.rectMode(p.CENTER);
+    p.push();
+    p.translate(pos.x, pos.y);
+    p.rotate(this.angle);
+    // p.rect(0, 0, 5, 5);
+    // p.line(pos.x-30, pos.y, pos.x+30, pos.y);
+    // p.ellipse(pos.x+30, pos.y, 10, 10);
+    // p.ellipse(pos.x-30, pos.y, 10, 10);
+    p.line(-10, 0, 10, 0);
+    p.ellipse(10, 0, 5, 5);
+    p.ellipse(-10, 0, 5, 5);
+    p.pop();
+
+    // this.angle += this.aVelocity;
+    // this.aVelocity += this.aAcceleration;
+    // this.aVelocity += p.random(-0.001, 0.001);
+    
+    // if(this.aVelocity > 10 || this.aVelocity < 10){
+    //   this.aVelocity = 0;
+    // }
+    
+  }
+};
+
+
+/***/ }),
+/* 9 */,
+/* 10 */,
+/* 11 */,
+/* 12 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* harmony export (immutable) */ __webpack_exports__["member"] = member;
+// // import {p5tw} from '../p5tw.js';
+// function setup(){
+
+// }
+// function update(p){
+
+//     var friction = p.createVector(-0.1, -0.1);
+//     return friction;
+
+//   // var mouse = p5tw.createVector(p5tw.mouseX,p5tw.mouseY);
+//  //    mover.acceleration = p5.Vector.sub(mouse,mover.position);
+
+//     // Set magnitude of acceleration
+//     // mover.acceleration.setMag(p5tw.random(0, 0.9));
+//     // mover.velocity.add(mover.acceleration);
+//     // mover.velocity.limit(3);
+//     // mover.position.add(mover.velocity);
+    
+
+// }
+// function draw(p){
+
+
+//   p.stroke(0,0,255, 0.1, 0.1);
+//   p.strokeWeight(2);
+//   p.fill(0,0,255,30);
+//   // p5tw.background(0);
+//   // p5tw.fill('green');
+//   // p5tw.ellipse(p5tw.position.x,p5tw.position.y,5,5);
+  
+
+//   // p.background(51);
+//   // // Apply gravity force to all Particles
+//   // var gravity = p.createVector(0, 0.1);
+//   // var wind = p.createVector(p.random(-1, 1), 0);
+//   // ps.applyForce(wind);
+
+//   // ps.addParticle();
+//   // ps.run();
+
+// }
+
+// module.exports  = {
+// 	setup : setup,
+// 	update : update, 
+// 	draw : draw
+// };
+
+function member(p, size) {
+  this.size = size;
+  this.particles = [];
+  this.bg = [25,30,7, 255];
+  this.r = [size.w] * 0.15;
+  this.theta = 0;
+  this.update = function(){
+    var x = this.r * p.cos(this.theta);
+    var y = this.r * p.sin(this.theta);
+    this.theta += 0.008;
+    var rotate = p.createVector(x*0.01, y*0.01);
+    return rotate;
+  }
+  this.draw = function(pos) {
+    
+
+    // p.stroke(0,255,0, 0.1, 255);
+    // p.strokeWeight(2);
+    // p.fill(0,255,0);
+    // p.rect(pos.x, pos.y, 10, 10);
+
+    // p.push();
+    // p.translate(pos.x, pos.y);
+    // p.translate(size.x + size.w/2 , size.y + size.h/2);
+    p.stroke(0,0,255, 0.1, 0.1);
+    p.strokeWeight(2);
+    p.fill(155,20,155);
+    // p.line(0, 0, pos.x, pos.y);
+    p.ellipse(pos.x, pos.y, 10, 10);
+    // pos.x = x;
+    // pos.y = y;
+    // p.pop();
+  }
 };
 
 

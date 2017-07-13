@@ -2,21 +2,40 @@ import Particle from './particle.js';
 // import p5 from 'p5';
 // var p5tw = new p5();
 
+function requireAll(requireContext) {
+  console.log('requireContext : ' + requireContext);
+  return requireContext.keys().map(requireContext);
+}
+var modules = requireAll(require.context("./members", true, /^\.\/.*\.js$/));
 
-var ParticleSystem = function(position, p5tw) {
+var ParticleSystem = function(p5tw) {
   // p5tw.draw = function(){
   //   console.log('aaaaaaaaa');
   // }
-  this.origin = position.copy();
+  // this.origin = position.copy();
   this.particles = [];
+
+
+  var members = [];
+  modules.forEach(function(m, i){
+    var minX = p5tw.width/modules.length * (i);
+    var maxX = p5tw.width/modules.length * (i+1);
+    var size = {x:minX,y:0,w:p5tw.width/modules.length,h:p5tw.height};
+                  
+    members.push(new m.member(p5tw,size));
+  });
 
   this.addParticle = function() {
     // this.particles.push(new Particle(this.origin, p5tw));
     var randOrigin = p5tw.createVector(p5tw.random(0, p5tw.width), p5tw.random(0, p5tw.height));
-    this.particles.push(new Particle(randOrigin, p5tw));
+    this.particles.push(new Particle(randOrigin, p5tw, members));
   };
 
   this.run = function() {
+    for (var i = members.length-1; i >= 0; i--) {
+      p5tw.fill(members[i].bg[0],members[i].bg[1],members[i].bg[2], members[i].bg[3]);
+      p5tw.rect(members[i].size.x, members[i].size.y, members[i].size.w, members[i].size.h);
+    }
     for (var i = this.particles.length-1; i >= 0; i--) {
       var p = this.particles[i];
       // if(p.ownerId)
@@ -44,6 +63,42 @@ var ParticleSystem = function(position, p5tw) {
   };
 };
 
+function fisheye() {
+    var min = 0,
+            max = 1,
+            distortion = 3,
+            focus = 0;
+
+    function G(x) {
+        return (distortion + 1) * x / (distortion * x + 1);
+    }
+
+    function fisheye(x) {
+        var Dmax_x = (x < focus ? min : max) - focus,
+                Dnorm_x = x - focus;
+        return G(Dnorm_x / Dmax_x) * Dmax_x + focus;
+    }
+
+    fisheye.extent = function(_) {
+        if (!arguments.length) return [min, max];
+        min = +_[0], max = +_[1];
+        return fisheye;
+    };
+
+    fisheye.distortion = function(_) {
+        if (!arguments.length) return distortion;
+        distortion = +_;
+        return fisheye;
+    };
+
+    fisheye.focus = function(_) {
+        if (!arguments.length) return focus;
+        focus = +_;
+        return fisheye;
+    };
+
+    return fisheye;
+}
 export default ParticleSystem;
 
 // import Particle from './particle';

@@ -4,9 +4,8 @@
 // }
 // function update(p){
 
-//     var gravity = p.createVector(0, 1);
-
-//     return gravity;
+//     var friction = p.createVector(-0.1, -0.1);
+//     return friction;
 
 //   // var mouse = p5tw.createVector(p5tw.mouseX,p5tw.mouseY);
 //  //    mover.acceleration = p5.Vector.sub(mouse,mover.position);
@@ -22,10 +21,10 @@
 // function draw(p){
 
 
-//   p.stroke(0,255,0, 0.1, 0.1);
+//   p.stroke(0,0,255, 0.1, 0.1);
 //   p.strokeWeight(2);
-//   p.fill(0,255,0,30);
-//   // p.background(0);
+//   p.fill(0,0,255,30);
+//   // p5tw.background(0);
 //   // p5tw.fill('green');
 //   // p5tw.ellipse(p5tw.position.x,p5tw.position.y,5,5);
   
@@ -41,31 +40,43 @@
 
 // }
 
-// module.exports = {
+// module.exports  = {
 // 	setup : setup,
 // 	update : update, 
 // 	draw : draw
 // };
-// 
-export function member (p, size) {
+
+export function member(p, size) {
   this.size = size;
   this.particles = [];
-  this.bg = [0,222,180, 255];
-
+  this.bg = [25,30,7, 255];
+  this.r = [size.w] * 0.15;
+  this.theta = 0;
   this.update = function(){
-    var gravity = p.createVector(0, 0.1);
-
-    return gravity;
+    var x = this.r * p.cos(this.theta);
+    var y = this.r * p.sin(this.theta);
+    this.theta += 0.008;
+    var rotate = p.createVector(x*0.01, y*0.01);
+    return rotate;
   }
   this.draw = function(pos) {
-    p.stroke(0,255,0, 0.1, 255);
+    
+
+    // p.stroke(0,255,0, 0.1, 255);
+    // p.strokeWeight(2);
+    // p.fill(0,255,0);
+    // p.rect(pos.x, pos.y, 10, 10);
+
+    // p.push();
+    // p.translate(pos.x, pos.y);
+    // p.translate(size.x + size.w/2 , size.y + size.h/2);
+    p.stroke(0,0,255, 0.1, 0.1);
     p.strokeWeight(2);
-    p.fill(0,255,0);
-    p.rect(pos.x, pos.y, 10, 10);
-  };
+    p.fill(155,20,155);
+    // p.line(0, 0, pos.x, pos.y);
+    p.ellipse(pos.x, pos.y, 10, 10);
+    // pos.x = x;
+    // pos.y = y;
+    // p.pop();
+  }
 };
-
-export function a(){
-
-}
-// module.exports = [member1, a];
