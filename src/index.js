@@ -37,7 +37,7 @@ getComponent().then(component => {
 				slug : 'p5_test'
 			};
 			p5canvas.canvas.enableFisheye = fisheye.enableFisheye;
-			p5canvas.canvas.enableFisheye(p, data, ps);
+			// p5canvas.canvas.enableFisheye(p, data, ps);
 			
 
 		};

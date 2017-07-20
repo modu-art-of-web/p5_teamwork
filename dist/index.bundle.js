@@ -17139,7 +17139,7 @@ getComponent().then(component => {
 				slug : 'p5_test'
 			};
 			p5canvas.canvas.enableFisheye = __WEBPACK_IMPORTED_MODULE_3__fisheye_js__["enableFisheye"];
-			p5canvas.canvas.enableFisheye(p, data, ps);
+			// p5canvas.canvas.enableFisheye(p, data, ps);
 			
 
 		};
@@ -52771,25 +52771,8 @@ function enableFisheye(p, d, ps) {
 
     console.log('d.slug : ' + d.slug);
     console.log('pixelRatio : ' + pixelRatio);
-    // if(d.slug === 'b_web_coat'){
-    //     image.src = "./burberry_imgs/burberry2.jpg";
-    //     imageWidth = 229;
-    //     imageHeight = 305;
-    // }else if( d.slug=== 'only_cloth'){
-    //     image.src = "./burberry_imgs/burberry3.jpg";
-    //     imageWidth = 300;
-    //     imageHeight = 350;
-    // }else if( d.slug=== 'fashion_show_2016'){
-    //     image.src = "./burberry_imgs/burberry4.jpg";
-    //     imageWidth = 405;
-    //     imageHeight = 607;
-    // }
-    image.src = "http://localhost.htdocs/burberry/burberry_imgs/burberry2.jpg";
-    imageWidth = 229;
-    imageHeight = 305;
-    
-    image.onload = initialize;
-    // initialize();
+
+    initialize();
     __WEBPACK_IMPORTED_MODULE_0_d3__["timer"](function() {
         if (progress < 0) return true;
         var context = d.context;
@@ -52810,7 +52793,6 @@ function enableFisheye(p, d, ps) {
     };
 
     __WEBPACK_IMPORTED_MODULE_0_d3__["select"](window)
-            .on("scroll", scroll)
             .on("resize", resize);
             
     function resize() {
@@ -52818,22 +52800,6 @@ function enableFisheye(p, d, ps) {
         p.resizeCanvas(p.windowWidth, p.windowHeight);
         d.resize();
 
-        scroll();
-    }
-
-    // Recompute which canvases are visible in the viewport.
-    function scroll() {
-        console.log('scroll');
-        // var dy = innerHeight;
-        // if (!canvas.filter(function() {
-        //                     var box = this.getBoundingClientRect();
-        //                     console.log('box : ' + box);
-        //                     return box.bottom > 0 && box.top < dy;
-        //                 })
-        //                 .each(enableFisheye)
-        //                 .empty()) {
-        //     canvas = canvas.filter(function(d) { return !d.enabled; });
-        // }
     }
 
     function initialize() {
