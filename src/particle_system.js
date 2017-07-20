@@ -24,6 +24,38 @@ var ParticleSystem = function(p5tw) {
                   
     members.push(new m.member(p5tw,size));
   });
+  
+  // members = shuffle(members);
+  function shuffle(array) {
+      let counter = array.length;
+
+      // While there are elements in the array
+      while (counter > 0) {
+          // Pick a random index
+          let index = Math.floor(Math.random() * counter);
+
+          // Decrease counter by 1
+          counter--;
+
+          // And swap the last element with it
+          let temp = array[counter];
+          array[counter] = array[index];
+          array[index] = temp;
+      }
+
+      return array;
+  }
+
+
+  this.getMemberCount = function(){
+    return members.length;
+  }
+
+  this.openLink = function(index){
+    if(typeof members[index].link !== 'undefined'){
+      window.open(members[index].link)
+    }
+  }
 
   this.addParticle = function() {
     // this.particles.push(new Particle(this.origin, p5tw));
@@ -33,19 +65,57 @@ var ParticleSystem = function(p5tw) {
 
   this.run = function() {
     for (var i = members.length-1; i >= 0; i--) {
+      p5tw.stroke(0,0,0,0);
+      p5tw.strokeWeight(0);
+
+      // p5tw.fill(255,255,255,255);
+      // p5tw.rect(members[i].size.x, members[i].size.y, members[i].size.w, members[i].size.h);
       p5tw.fill(members[i].bg[0],members[i].bg[1],members[i].bg[2], members[i].bg[3]);
       p5tw.rect(members[i].size.x, members[i].size.y, members[i].size.w, members[i].size.h);
+      if(typeof members[i].name !== 'undefined'){
+        var memberName = members[i].name;
+        for(var j=0; j < members[i].name.length; j++){
+          memberName = memberName.substring(j,memberName.length-j);
+          if(members[i].size.w > p5tw.textWidth(memberName)){
+            // textWidth
+            if(typeof members[i].textColor !== 'undefined'){
+              p5tw.fill(members[i].textColor[0],members[i].textColor[1],members[i].textColor[2], members[i].textColor[3]);
+            }else{
+              p5tw.fill(255,255,255,255);
+            }
+            p5tw.textAlign(p5tw.CENTER);
+            p5tw.text(memberName, members[i].size.x + (members[i].size.w / 2), members[i].size.y + (members[i].size.h / 5.5));
+            // if(i !== members.length-1){
+            //   p5tw.fill(members[i+1].bg[0],members[i+1].bg[1],members[i+1].bg[2], members[i+1].bg[3]);
+            //   p5tw.rect(members[i+1].size.x, members[i+1].size.y, members[i+1].size.w, members[i+1].size.h);
+            // }
+            break;
+          }
+        }
+        
+      }
     }
     for (var i = this.particles.length-1; i >= 0; i--) {
       var p = this.particles[i];
       // if(p.ownerId)
       p.run();
       if (p.isDead()) {
-        // console.log(this.particles.length);
         this.particles.splice(i, 1);
       }
     }
   };
+
+  this.setPosX = function(getX, h){
+    for (var i = 0, n = members.length; i < n; ++i) {
+        var x0 = getX(i * p5tw.width/members.length),
+            x1 = getX((i + 1) * p5tw.width/members.length);
+                // dx = Math.min(imageWidth, x1 - x0);
+
+        members[i].size.x = x0;
+        members[i].size.w = x1 - x0;
+        members[i].size.h = h;
+    }
+  }
 
   // A function to apply a force to all Particles
   this.applyForce = function(f) {
@@ -63,75 +133,5 @@ var ParticleSystem = function(p5tw) {
   };
 };
 
-function fisheye() {
-    var min = 0,
-            max = 1,
-            distortion = 3,
-            focus = 0;
 
-    function G(x) {
-        return (distortion + 1) * x / (distortion * x + 1);
-    }
-
-    function fisheye(x) {
-        var Dmax_x = (x < focus ? min : max) - focus,
-                Dnorm_x = x - focus;
-        return G(Dnorm_x / Dmax_x) * Dmax_x + focus;
-    }
-
-    fisheye.extent = function(_) {
-        if (!arguments.length) return [min, max];
-        min = +_[0], max = +_[1];
-        return fisheye;
-    };
-
-    fisheye.distortion = function(_) {
-        if (!arguments.length) return distortion;
-        distortion = +_;
-        return fisheye;
-    };
-
-    fisheye.focus = function(_) {
-        if (!arguments.length) return focus;
-        focus = +_;
-        return fisheye;
-    };
-
-    return fisheye;
-}
 export default ParticleSystem;
-
-// import Particle from './particle';
-
-// export default class ParticleSystem {
-
-//     constructor(page, width, mouse) {
-//         this.page = page;
-//         this.width = width;
-//         this.mouse = mouse;
-
-//         this.particles = [];
-//     }
-
-//     addParticle() {
-//         let p = new Particle(this.width, this.mouse);
-//         p.display();
-//         this.page.scene.add(p.sphere);
-//         this.particles.push(p);
-//     };
-
-//     run() {
-//         for (let i = 0; i < this.particles.length; i++) {
-//             let particle = this.particles[i];
-
-//             particle.update();
-
-//             if (particle.isDead()) {
-//                 this.page.scene.remove(particle.sphere);
-//                 this.particles.splice(i, 1);
-//                 i -= 1;
-//             }
-//         }
-//     };
-
-// }

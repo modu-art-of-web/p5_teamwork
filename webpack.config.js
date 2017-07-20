@@ -13,6 +13,15 @@ module.exports = {
 		// vendor: ['lodash'],
 		// another: './src/another-module.js'
 	},
+	module: {
+		rules: [{
+		  test: /\.(png|jpg)$/,
+		  use: [{
+		    loader: 'url-loader',
+		    options: { limit: 10000 } // 10k 이하 이미지는 base64 문자열로 변환
+		  }]
+		}]
+	},
 	plugins: [
 
 		new CleanWebpackPlugin(['dist']),
